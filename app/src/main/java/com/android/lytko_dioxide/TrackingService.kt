@@ -27,9 +27,6 @@ class TrackingService : Service() {
         const val valueIntentName = "com.android.lytko_dioxide.new_value"
         const val valueIntentExtraName = "ppm"
     
-        const val statusIntentName = "com.android.lytko_dioxide.state_changed"
-        const val statusIntentExtraName = "isRunning"
-        
         const val requireValueExtraKey = "requireValue"
     }
     
@@ -39,8 +36,6 @@ class TrackingService : Service() {
     
     override fun onCreate() {
         Timber.i("TrackingService#onCreate")
-    
-        sendStatus(isRunning = true)
         
         initialize()
         connect()
@@ -63,15 +58,7 @@ class TrackingService : Service() {
     
     override fun onDestroy() {
         Timber.i("TrackingService#onDestroy")
-        
-        sendStatus(isRunning = false)
         disconnect()
-    }
-    
-    private fun sendStatus(isRunning: Boolean) {
-        Timber.i("sendState")
-        
-        sendBroadcast(Intent(statusIntentName).apply { putExtra(statusIntentExtraName, isRunning) })
     }
     
     private fun initialize() {
