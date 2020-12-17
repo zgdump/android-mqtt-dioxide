@@ -13,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.android.lytko_dioxide.TrackingService.Companion.statusIntentExtraName
+import com.android.lytko_dioxide.TrackingService.Companion.valueIntentExtraName
 import com.android.lytko_dioxide.util.android.broadcastReceiver
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
@@ -21,12 +23,16 @@ import timber.log.Timber
 class MainActivity : AppCompatActivity() {
 
     private val valueBroadcastReceiver = broadcastReceiver { _, intent ->
-        showValue(intent?.getFloatExtra(TrackingService.valueIntentExtraName, Float.NaN) ?: Float.NaN)
+        val value = intent?.getFloatExtra(valueIntentExtraName, Float.NaN)
+        showValue(value ?: Float.NaN)
     }
 
-    private val stateBroadcastReceiver = broadcastReceiver { _, _ ->
-        syncStateWithService()
+    private val stateBroadcastReceiver = broadcastReceiver { _, intent ->
+        val isRunning = intent?.getBooleanExtra(statusIntentExtraName, false)
+        saveServiceStatus(isRunning ?: false)
     }
+
+    private var isServiceRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,31 +45,15 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-        LocalBroadcastManager
-                .getInstance(this)
-                .unregisterReceiver(valueBroadcastReceiver)
-
-        LocalBroadcastManager
-                .getInstance(this)
-                .unregisterReceiver(stateBroadcastReceiver)
+        unregisterReceiver(valueBroadcastReceiver)
+        unregisterReceiver(stateBroadcastReceiver)
     }
 
     override fun onResume() {
         super.onResume()
 
-        LocalBroadcastManager
-                .getInstance(this)
-                .registerReceiver(
-                        valueBroadcastReceiver,
-                        IntentFilter(TrackingService.valueIntentName)
-                )
-
-        LocalBroadcastManager
-                .getInstance(this)
-                .registerReceiver(
-                        stateBroadcastReceiver,
-                        IntentFilter(TrackingService.stateIntentName)
-                )
+        registerReceiver(valueBroadcastReceiver, IntentFilter(TrackingService.valueIntentName))
+        registerReceiver(stateBroadcastReceiver, IntentFilter(TrackingService.statusIntentName))
 
         requestValueFromService()
     }
@@ -87,12 +77,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateButtons() {
-        buttonStart.isVisible = !TrackingService.isRunning
-        buttonStop.isVisible = TrackingService.isRunning
+        buttonStart.isVisible = !isServiceRunning
+        buttonStop.isVisible = isServiceRunning
     }
 
     private fun requestValueFromService() {
-        if (TrackingService.isRunning) {
+        if (isServiceRunning) {
             Timber.d("Request value from service using intent")
             startService(Intent(this, TrackingService::class.java).apply {
                 putExtras(bundleOf(TrackingService.requireValueExtraKey to true))
@@ -128,5 +118,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             this.textValue.text = ("$value ppm")
         }
+    }
+
+    private fun saveServiceStatus(isRunning: Boolean) {
+        this.isServiceRunning = isRunning
+        syncStateWithService()
     }
 }

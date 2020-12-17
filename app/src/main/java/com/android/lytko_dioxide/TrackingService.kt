@@ -3,7 +3,6 @@ package com.android.lytko_dioxide
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import timber.log.Timber
@@ -25,12 +24,11 @@ class TrackingService : Service() {
         
         /* --- SERVICE --- */
         
-        var isRunning = false
-        
-        const val valueIntentName = "value"
+        const val valueIntentName = "com.android.lytko_dioxide.new_value"
         const val valueIntentExtraName = "ppm"
     
-        const val stateIntentName = "state"
+        const val statusIntentName = "com.android.lytko_dioxide.state_changed"
+        const val statusIntentExtraName = "isRunning"
         
         const val requireValueExtraKey = "requireValue"
     }
@@ -41,9 +39,9 @@ class TrackingService : Service() {
     
     override fun onCreate() {
         Timber.i("TrackingService#onCreate")
-        isRunning = true
+    
+        sendStatus(isRunning = true)
         
-        sendState()
         initialize()
         connect()
     }
@@ -65,18 +63,15 @@ class TrackingService : Service() {
     
     override fun onDestroy() {
         Timber.i("TrackingService#onDestroy")
-        isRunning = false
         
-        sendState()
+        sendStatus(isRunning = false)
         disconnect()
     }
     
-    private fun sendState() {
+    private fun sendStatus(isRunning: Boolean) {
         Timber.i("sendState")
         
-        LocalBroadcastManager
-            .getInstance(this)
-            .sendBroadcast(Intent(stateIntentName))
+        sendBroadcast(Intent(statusIntentName).apply { putExtra(statusIntentExtraName, isRunning) })
     }
     
     private fun initialize() {
@@ -149,9 +144,7 @@ class TrackingService : Service() {
     }
     
     private fun sendValueUsingBroadcast() {
-        LocalBroadcastManager
-            .getInstance(this)
-            .sendBroadcast(Intent(valueIntentName).apply { putExtra(valueIntentExtraName, lastValue) })
+        sendBroadcast(Intent(valueIntentName).apply { putExtra(valueIntentExtraName, lastValue) })
     }
     
     private fun disconnect() {
