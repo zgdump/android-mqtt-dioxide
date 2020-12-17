@@ -7,7 +7,7 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/label"
+        android:id="@+id/textLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -15,12 +15,12 @@
         android:text="Уровень CO₂"
         android:textColor="@color/textSecondary"
         android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@id/value"
+        app:layout_constraintBottom_toTopOf="@id/textValue"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
-        android:id="@+id/value"
+        android:id="@+id/textValue"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -29,13 +29,12 @@
         android:textColor="@color/textPrimary"
         android:textSize="58sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/label" />
+        app:layout_constraintTop_toBottomOf="@id/textLabel" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonStart"
         style="@style/ActionButton"
         android:text="Отслеживать"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <com.google.android.material.button.MaterialButton
@@ -43,18 +42,19 @@
         style="@style/ActionButton"
         android:text="Прекратить отслеживание"
         android:textColor="@color/red"
+        android:visibility="gone"
         app:icon="@drawable/ic_stop"
         app:iconTint="@color/red"
         app:layout_constraintBottom_toBottomOf="parent"
         app:strokeColor="@color/red" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonDoze"
+        android:id="@+id/buttonDisableBatteryOptimizations"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
-        android:text="Настроить Doze"
+        android:text="Отключить Doze"
         app:icon="@drawable/ic_sleep"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

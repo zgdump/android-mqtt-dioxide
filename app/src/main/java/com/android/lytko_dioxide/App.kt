@@ -1,4 +1,4 @@
-package com.android.lytko_dioxide.global
+package com.android.lytko_dioxide
 
 import android.app.Application
 import android.content.Context
