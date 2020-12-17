@@ -99,6 +99,8 @@ class MainActivity : AppCompatActivity() {
     private fun startTracking() {
         isRunning = true
         updateState()
+
+        startService(Intent(this, TrackingService::class.java))
     }
 
     private fun stopTracking() {
