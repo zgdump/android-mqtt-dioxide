@@ -20,18 +20,19 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <service
+            android:name="org.eclipse.paho.android.service.MqttService"
+            android:process=":lytko_dioxide_background" />
 
         <service
             android:name=".TrackingService"
             android:enabled="true"
-            android:exported="false" />
-
+            android:exported="false"
+            android:process=":lytko_dioxide_background" />
 
     </application>
 </manifest>

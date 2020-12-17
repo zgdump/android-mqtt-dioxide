@@ -6,45 +6,34 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import kotlinx.android.synthetic.main.activity_main.*
 import android.os.PowerManager
+import android.provider.Settings
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.android.lytko_dioxide.util.android.broadcastReceiver
+import kotlinx.android.synthetic.main.activity_main.*
+import timber.log.Timber
 
 
 class MainActivity : AppCompatActivity() {
 
     private val valueBroadcastReceiver = broadcastReceiver { _, intent ->
-        showValue(intent?.getFloatExtra(TrackingService.valueIntentExtraName, 0f) ?: 0f)
+        showValue(intent?.getFloatExtra(TrackingService.valueIntentExtraName, Float.NaN) ?: Float.NaN)
     }
 
-    private val isRunningKey: String = "isRunning"
-    private var isRunning: Boolean = false
+    private val stateBroadcastReceiver = broadcastReceiver { _, _ ->
+        syncStateWithService()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        isRunning = savedInstanceState?.getBoolean(isRunningKey) ?: isServiceRunning()
-        updateState()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            buttonDisableBatteryOptimizations.setOnClickListener { ignoreBatteryOptimizations() }
-        } else {
-            buttonDisableBatteryOptimizations.isVisible = false
-        }
-
-        buttonStart.setOnClickListener { startTracking() }
-        buttonStop.setOnClickListener { stopTracking() }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean("isRunning", isRunning)
+        setupButtons()
+        syncStateWithService()
     }
 
     override fun onPause() {
@@ -53,6 +42,10 @@ class MainActivity : AppCompatActivity() {
         LocalBroadcastManager
                 .getInstance(this)
                 .unregisterReceiver(valueBroadcastReceiver)
+
+        LocalBroadcastManager
+                .getInstance(this)
+                .unregisterReceiver(stateBroadcastReceiver)
     }
 
     override fun onResume() {
@@ -64,24 +57,49 @@ class MainActivity : AppCompatActivity() {
                         valueBroadcastReceiver,
                         IntentFilter(TrackingService.valueIntentName)
                 )
+
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(
+                        stateBroadcastReceiver,
+                        IntentFilter(TrackingService.stateIntentName)
+                )
+
+        requestValueFromService()
     }
 
-    private fun isServiceRunning(): Boolean {
-        return false
+    private fun setupButtons() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            buttonDisableBatteryOptimizations.setOnClickListener { ignoreBatteryOptimizations() }
+        } else {
+            buttonDisableBatteryOptimizations.isVisible = false
+        }
+
+        buttonStart.setOnClickListener { startTracking() }
+        buttonStop.setOnClickListener { stopTracking() }
     }
 
-    private fun updateState() {
+    private fun syncStateWithService() {
+        Timber.d("syncStateWithService")
+
         updateButtons()
-        updateValueFromService()
+        requestValueFromService()
     }
 
     private fun updateButtons() {
-        buttonStart.isVisible = !isRunning
-        buttonStop.isVisible = isRunning
+        buttonStart.isVisible = !TrackingService.isRunning
+        buttonStop.isVisible = TrackingService.isRunning
     }
 
-    private fun updateValueFromService() {
-
+    private fun requestValueFromService() {
+        if (TrackingService.isRunning) {
+            Timber.d("Request value from service using intent")
+            startService(Intent(this, TrackingService::class.java).apply {
+                putExtras(bundleOf(TrackingService.requireValueExtraKey to true))
+            })
+        } else {
+            showValue(Float.NaN)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -97,18 +115,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTracking() {
-        isRunning = true
-        updateState()
-
         startService(Intent(this, TrackingService::class.java))
     }
 
     private fun stopTracking() {
-        isRunning = false
-        updateState()
+        stopService(Intent(this, TrackingService::class.java))
     }
 
     private fun showValue(value: Float) {
-        this.textValue.text = ("$value ppm")
+        if (value.isNaN()) {
+            this.textValue.text = ("Нет данных")
+        } else {
+            this.textValue.text = ("$value ppm")
+        }
     }
 }

@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="4dp"
-        android:text="0 ppm"
+        android:text="0.0 ppm"
         android:textColor="@color/textPrimary"
         android:textSize="58sp"
         app:layout_constraintBottom_toBottomOf="parent"

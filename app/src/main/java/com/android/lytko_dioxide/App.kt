@@ -2,6 +2,7 @@ package com.android.lytko_dioxide
 
 import android.app.Application
 import android.content.Context
+import timber.log.Timber
 
 class App : Application() {
 
@@ -15,5 +16,9 @@ class App : Application() {
         super.onCreate()
 
         appContext = applicationContext
+        
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
     }
 }
