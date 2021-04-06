@@ -6,6 +6,7 @@ import android.os.IBinder
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import timber.log.Timber
+import java.util.*
 
 class TrackingService : Service() {
     
@@ -20,19 +21,29 @@ class TrackingService : Service() {
         private const val mqttPort = "1883"
         
         private const val mqttDeviceId = 0
-    
+        
         
         /* --- SERVICE --- */
         
         const val valueIntentName = "com.android.lytko_dioxide.new_value"
         const val valueIntentExtraName = "ppm"
-    
+        
         const val requireValueExtraKey = "requireValue"
+        
+        
+        /* --- PARAMS --- */
+        
+        const val thresholdValue = 1000f
+        
+        const val notificationPeriod = 60 * 60 * 1000
     }
     
     private lateinit var mqttClient: MqttAndroidClient
     
     private var lastValue: Float = Float.NaN
+    
+    private var valueExceeded: Boolean = false
+    private var valueExceededTime: Date = Date(1)
     
     override fun onCreate() {
         Timber.i("TrackingService#onCreate")
@@ -125,9 +136,19 @@ class TrackingService : Service() {
     
     private fun valueReceived(value: Float) {
         Timber.i("Value received $value")
-    
+        
         lastValue = value
         sendValueUsingBroadcast()
+        
+        valueExceeded = lastValue >= thresholdValue
+        if (valueExceeded) {
+            val currentTime = Calendar.getInstance().time
+            val delta = currentTime.time - valueExceededTime.time
+            if (delta >= notificationPeriod) {
+                valueExceededTime = currentTime
+                NotificationUtil.showExceededValueNotification(this, value)
+            }
+        }
     }
     
     private fun sendValueUsingBroadcast() {

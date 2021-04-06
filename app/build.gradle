@@ -51,6 +51,9 @@ dependencies {
     implementation "org.eclipse.paho:org.eclipse.paho.android.service:1.1.1"
     implementation "androidx.localbroadcastmanager:localbroadcastmanager:1.0.0"
 
+    // Notifications
+    implementation 'com.kirich1409.android-notification-dsl:core:0.1.0'
+
     // Tools
     implementation "com.jakewharton.timber:timber:4.7.1"
 }
